@@ -42,10 +42,17 @@ export default function PaymentForm() {
         }, 6000);
 
         try {
+            const amount = watch("amount")
             await new Promise(resolve => setTimeout(resolve, 2000))
             const res = await fetch("/api/pay", {
                 method: "POST",
-                body: JSON.stringify(data),
+                headers: {
+                  "Content-Type": "application/json"  
+                },
+                body: JSON.stringify({
+                    transaction_id: transactionId,
+                    amount
+                }),
                 signal: controller.signal,
             });
 
@@ -68,9 +75,9 @@ export default function PaymentForm() {
             };
             dispatch(setTransactions(transaction));
 
-            if (status === "success") {
-                reset();
-            }
+            // if (status === "success") {
+            //     reset();
+            // }
             return status;
 
         } catch (error: any) {

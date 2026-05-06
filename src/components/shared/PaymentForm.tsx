@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { Dollar01Icon, RupeeIcon } from "@hugeicons/core-free-icons";
+import { ArrowRight, Dollar01Icon, Link01Icon, Link02Icon, RupeeIcon, Share01Icon, TransactionIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useForm } from "react-hook-form";
 import z from "zod"
@@ -12,27 +12,117 @@ import CardPreview from "@/components/shared/CardPreview";
 import { formatCardNumber } from "@/lib/utils";
 import { paymentSchema } from "@/lib/validations";
 import CardIcon from "@/components/shared/CardIcon";
+import { Spinner } from "../ui/spinner";
+import { useAppDispatch } from "@/redux/hooks";
+import { PaymentStatus, setPaymentStatus, setTransactions } from "@/redux/features/paymentSlice";
+import Link from "next/link";
+import StatusModal from "../modals/StatusModal";
 
-type CardInputTypes = z.infer<typeof paymentSchema>
+export type CardInputTypes = z.infer<typeof paymentSchema>
 type AmountType = "usd" | "inr"
 
 export default function PaymentForm() {
+    const dispatch = useAppDispatch()
+
     const [amountType, setAmountType] = useState<AmountType>('usd')
-    const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting, isValid } } = useForm<CardInputTypes>({
+    const [open, setOpen] = useState(false)
+    const [currentTxId, setCurrentTxId] = useState('')
+    const [attempt, setAttempt] = useState(1)
+    const [lastData, setLastData] = useState<CardInputTypes | null>(null)
+    const [errorMessage, setErrorMessage] = useState('')
+    const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting, isValid } } = useForm<CardInputTypes>({
         resolver: zodResolver(paymentSchema),
         mode: "all",
         reValidateMode: "onChange"
     })
-    
-    const onSubmit = (data: CardInputTypes) => {
+
+    const processPayment = async (data: CardInputTypes, transactionId: string, attemptNumber: number) => {
+        setOpen(true)
+        dispatch(setPaymentStatus("processing"));
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+        }, 6000);
+
         try {
-            const transactionId = crypto.randomUUID()
-            console.log('transactionId', transactionId)
-            console.log('form submit', data)
-        } catch (error) {
-            console.log(error)
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            const res = await fetch("/api/pay", {
+                method: "POST",
+                body: JSON.stringify(data),
+                signal: controller.signal,
+            });
+
+            const result = await res.json();
+            const status = result.status;
+
+            if (!res.ok) {
+                setErrorMessage(result.message)
+            }
+
+            dispatch(setPaymentStatus(status));
+
+            const transaction = {
+                transactionId,
+                amount: data.amount,
+                cardNumber,
+                retryCount: attemptNumber,
+                currency: amountType,
+                status,
+            };
+            dispatch(setTransactions(transaction));
+
+            if (status === "success") {
+                reset();
+            }
+            return status;
+
+        } catch (error: any) {
+            if (error.name === "AbortError") {
+                dispatch(setPaymentStatus("timeout"));
+
+                const transaction = {
+                    transactionId,
+                    amount: data.amount,
+                    cardNumber,
+                    retryCount: attemptNumber,
+                    currency: amountType,
+                    status: "timeout" as PaymentStatus,
+                };
+                dispatch(setTransactions(transaction))
+                return "timeout";
+            }
+
+            dispatch(setPaymentStatus("failed"));
+            return "failed";
+        } finally {
+            clearTimeout(timeoutId);
         }
+    };
+
+    const onSubmit = async (data: CardInputTypes) => {
+        const transactionId = crypto.randomUUID();
+        setCurrentTxId(transactionId)
+        setLastData(data)
+        await processPayment(data, transactionId, attempt)
     }
+
+    const handleRetry = async () => {
+        if (!lastData) return;
+        console.log(attempt)
+        if (attempt >= 3) return;
+
+        const nextAttempt = attempt + 1;
+        setAttempt(nextAttempt);
+
+        await processPayment(lastData, currentTxId, nextAttempt);
+
+        if (nextAttempt === 3) {
+            reset()
+            setTimeout(() => {
+                setOpen(false)
+            }, 2000)
+        }
+    };
 
     const cardNumber = watch("card_number")
 
@@ -103,18 +193,38 @@ export default function PaymentForm() {
                 </div>
 
                 <div className="w-fit mx-auto">
-                    <Button type="submit" disabled={!isValid || isSubmitting}>Submit</Button>
+                    <Button type="submit" disabled={!isValid || isSubmitting}>
+                        Submit
+                        {isSubmitting && <Spinner />}
+                    </Button>
                 </div>
             </form>
 
             {/* Card preview */}
-            <div className="bg-black/10 p-6">
+            <div className="bg-black/10 p-6 relative">
                 <CardPreview
                     name={watch("name")}
                     cardNumber={watch("card_number")}
                     expiry={watch("expiry_date")}
                 />
+                <div className="w-fit mx-auto mt-8 absolute bottom-4 right-4">
+                    <Link href="/transactions">
+                        <Button className="mx-auto bg-cyan-600">
+                            View Recent Transactions
+                            <HugeiconsIcon icon={ArrowRight} size={16} />
+                        </Button>
+                    </Link>
+                </div>
             </div>
+
+            {/* Dialog */}
+            <StatusModal
+                open={open}
+                setOpen={setOpen}
+                retryAttempts={attempt}
+                onRetry={handleRetry}
+                errorMessage={errorMessage}
+            />
         </div>
     );
 }

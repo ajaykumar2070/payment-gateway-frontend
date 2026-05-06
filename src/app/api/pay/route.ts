@@ -5,17 +5,56 @@ export async function POST(req: Request) {
         const random = Math.random();
 
         // 60% success
-        if (random < 0.60) {
-            return new Response("Transaction successful");
-        }
+        // if (random < 0.60) {
+        //     return Response.json({
+        //         success: true,
+        //         status: "success",
+        //         message: "Transaction successful",
+        //     })
+        // }
+
+        // // 25% failure
+        // else if (random < 0.85) {
+        //     return Response.json({
+        //         success: false,
+        //         status: "failed",
+        //         message: "Insufficient funds"
+        //     },
+        //         { status: 402 }
+        //     )
+        // }
+
+        // if (random < 0.60) {
+        //     return Response.json({
+        //         success: true,
+        //         status: "success",
+        //         message: "Transaction successful",
+        //     })
+        // }
+
         // 25% failure
-        else if (random < 0.85) {
-            throw new Error("Insufficient funds")
+        if (random < 0.5) {
+            return Response.json({
+                success: false,
+                status: "failed",
+                message: "Insufficient funds"
+            },
+                { status: 402 }
+            )
         }
+
         // 15% delayed response
         else {
             await new Promise(resolve => setTimeout(resolve, 8000));
-            return new Response("Request delayed", { status: 504 })
+            return Response.json(
+                {
+                    success: false,
+                    status: "timeout",
+                    message: "Request timed out",
+                    retryable: true,
+                },
+                { status: 408 }
+            );
         }
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unexpected error';

@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 type CardType =
   | "visa"
-  | "mastercard"
+  | "master-card"
   | "amex"
   | "unknown";
 
@@ -15,7 +15,7 @@ export function getCardType(cardNumber: string): CardType {
   if(!cardNumber) return "unknown";
   const num = cardNumber.replace(/\D/g, "");
   if (/^4/.test(num)) return "visa";
-  if (/^(5[1-5]|2[2-7])/.test(num)) return "mastercard";
+  if (/^(5[1-5]|2[2-7])/.test(num)) return "master-card";
   if (/^3[47]/.test(num)) return "amex";
 
   return "unknown";

@@ -32,3 +32,5 @@ export const paymentSchema = z.object({
     .string()
     .regex(/^\d+(\.\d{1,2})?$/, "Invalid amount")
 });
+
+export type CardInputTypes = z.infer<typeof paymentSchema>

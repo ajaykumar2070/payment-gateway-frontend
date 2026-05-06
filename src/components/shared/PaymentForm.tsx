@@ -2,40 +2,37 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { ArrowRight, Dollar01Icon, Link01Icon, Link02Icon, RupeeIcon, Share01Icon, TransactionIcon } from "@hugeicons/core-free-icons";
+import { ArrowRight, Dollar01Icon, RupeeIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useForm } from "react-hook-form";
-import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import CardPreview from "@/components/shared/CardPreview";
 import { formatCardNumber } from "@/lib/utils";
-import { paymentSchema } from "@/lib/validations";
+import { CardInputTypes, paymentSchema } from "@/lib/validations";
 import CardIcon from "@/components/shared/CardIcon";
 import { Spinner } from "../ui/spinner";
 import { useAppDispatch } from "@/redux/hooks";
-import { PaymentStatus, setPaymentStatus, setTransactions } from "@/redux/features/paymentSlice";
+import { setPaymentStatus, setTransactions } from "@/redux/features/paymentSlice";
 import Link from "next/link";
 import StatusModal from "../modals/StatusModal";
-
-export type CardInputTypes = z.infer<typeof paymentSchema>
-type AmountType = "usd" | "inr"
+import { AmountType, PaymentStatus } from "@/types/payment";
 
 export default function PaymentForm() {
     const dispatch = useAppDispatch()
-
     const [amountType, setAmountType] = useState<AmountType>('usd')
     const [open, setOpen] = useState(false)
     const [currentTxId, setCurrentTxId] = useState('')
     const [attempt, setAttempt] = useState(1)
     const [lastData, setLastData] = useState<CardInputTypes | null>(null)
     const [errorMessage, setErrorMessage] = useState('')
+
     const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting, isValid } } = useForm<CardInputTypes>({
         resolver: zodResolver(paymentSchema),
         mode: "all",
-        reValidateMode: "onChange"
     })
 
+    // process Payment
     const processPayment = async (data: CardInputTypes, transactionId: string, attemptNumber: number) => {
         setOpen(true)
         dispatch(setPaymentStatus("processing"));
@@ -99,6 +96,7 @@ export default function PaymentForm() {
         }
     };
 
+    //handle submit
     const onSubmit = async (data: CardInputTypes) => {
         const transactionId = crypto.randomUUID();
         setCurrentTxId(transactionId)
@@ -106,6 +104,7 @@ export default function PaymentForm() {
         await processPayment(data, transactionId, attempt)
     }
 
+    // handle retry
     const handleRetry = async () => {
         if (!lastData) return;
         console.log(attempt)
@@ -127,7 +126,7 @@ export default function PaymentForm() {
     const cardNumber = watch("card_number")
 
     return (
-        <div className="bg-white shadow-xl rounded-3xl overflow-hidden grid grid-cols-2 w-4xl">
+        <div className="bg-white shadow-xl rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2 w-full max-w-4xl">
             {/* form */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6">
                 <div className="space-y-1">
@@ -201,13 +200,13 @@ export default function PaymentForm() {
             </form>
 
             {/* Card preview */}
-            <div className="bg-black/10 p-6 relative">
+            <div className="bg-black/15 md:bg-black/10 p-6 relative">
                 <CardPreview
                     name={watch("name")}
-                    cardNumber={watch("card_number")}
+                    cardNumber={cardNumber}
                     expiry={watch("expiry_date")}
                 />
-                <div className="w-fit mx-auto mt-8 absolute bottom-4 right-4">
+                <div className="w-fit mx-auto mt-8 md:absolute bottom-4 right-4">
                     <Link href="/transactions">
                         <Button className="mx-auto bg-cyan-600">
                             View Recent Transactions

@@ -4,7 +4,12 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 First, run the development server:
 
+### To run the project  use these commands
 ```bash
+
+npm install
+
+#then
 npm run dev
 # or
 yarn dev
@@ -16,21 +21,24 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<!-- Summary -->
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. I have add an Form where user can ennter the card details, applied proper validation using react-hoo-form and zod,
+2. Kept button disabled until all fields are compelety filled.
+3. Added and card preview too where user can see the preview the the card with some gradiant background
+4. I also added Card image for visa,mastercard and amex the image displayed based of the card nubmer starting digits.
+5. For Payment simulation when user clicks submit i added a small processing time of 2 seconds then the api hits.
+6. I have generated a random number in api/pay route and if number below 0.6 means below 60% the payment response is "success"
+7. on 60-85% the payment gets failed.
+8. and on below 85%-100% the 8 sec timout runs and retuerns timeout error
 
-## Learn More
+9. in frontent i add abord controller with timeout of 6 seconds after 6 seconds the request get rejected and the payment status updated to the timeout,
+10. Added retry button so that user can retry 3 time and if all tries filled the forms resets and modals closes after 2 sec delay.
+11. Added transaction page where user can see his transaction with the status and attemps made.
+12. Made the design responsive based on mobile and desktop view-port
+13. Used redux toolkit for updating payment status and and Adding transactions.
+14. the Transaction persists on refresh (stored them in local storage).
+15. made seperate components for each like mobile cards, desktop row, cardpreview. for shared ui
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Tech that i used
+Nextjs, ShadcnUI, TailwindCSS, radux Toolkit

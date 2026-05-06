@@ -5,35 +5,16 @@ export async function POST(req: Request) {
         const random = Math.random();
 
         // 60% success
-        // if (random < 0.60) {
-        //     return Response.json({
-        //         success: true,
-        //         status: "success",
-        //         message: "Transaction successful",
-        //     })
-        // }
-
-        // // 25% failure
-        // else if (random < 0.85) {
-        //     return Response.json({
-        //         success: false,
-        //         status: "failed",
-        //         message: "Insufficient funds"
-        //     },
-        //         { status: 402 }
-        //     )
-        // }
-
-        // if (random < 0.60) {
-        //     return Response.json({
-        //         success: true,
-        //         status: "success",
-        //         message: "Transaction successful",
-        //     })
-        // }
+        if (random < 0.60) {
+            return Response.json({
+                success: true,
+                status: "success",
+                message: "Transaction successful",
+            })
+        }
 
         // 25% failure
-        if (random < 0.5) {
+        else if (random < 0.85) {
             return Response.json({
                 success: false,
                 status: "failed",

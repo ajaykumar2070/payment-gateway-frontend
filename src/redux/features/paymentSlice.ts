@@ -1,15 +1,7 @@
 'use client'
+import { PaymentStatus, Transaction } from '@/types/payment'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-export type PaymentStatus = "idle" | "processing" | "success" | "failed" | "timeout"
-interface Transaction {
-    transactionId: string,
-    amount: string,
-    cardNumber: string,
-    retryCount: number,
-    currency: string,
-    status: PaymentStatus
-}
 interface PaymetSliceTypes {
     paymentStatus: PaymentStatus
     transactions: Transaction[]
